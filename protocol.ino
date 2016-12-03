@@ -5,59 +5,51 @@
 ожидать сигнал от полки: "товар получен"
 найти путь до выхода
 отправиться к выходу
-почистить переменные
 вернуться домой
 */
 
+#include <SPI.h>          //библиотека для радиомодуля
+#include "nRF24L01.h"     //библиотека для радиомодуля
+#include "RF24.h"         //библиотека для радиомодуля
 #include "Arina's_code.ino" //включение файла с картой и функцией для поиска пути
 #include "Vanya's_code.ino" //включение файла с алогоритмами движения
 
-short shelfStatusPin = 13;           //пин для сигнала о готовности полки
-short shelfStatusPin_Number = 12;    //пин для получения номера полки
-short shipmentStatusPin = 11; //пин для сигнала о готовности товара
-bool shelfStatus;    //переменная для обработки сигнала о готовности полки
-bool shipmentStatus; //переменная для обработки сигнала о готовности товара
-bool workDone;       //переменная для статуса окончания действий робота.
+RF24 radio(9, 10);   //подключение радиомодуля к пинам 9 и 10
+bool workDone;  //переменная для статуса работы
+const uint64_t pipe00 = 0xE8E8F0F0E1LL;    //задание адреса для пайпов
+char pipeBuffer[30]; //буффер с типом char, который является массивом из 30 элементов.
+char neededMessage[1]; //массив длинной 1, для записи нужного сообщения
 
 void setup() {
-  pinMode(shelfStatusPin, INPUT);        //пин в режим получения сигнала
-  pinMode(shelfStatusPin_Number, INPUT); //пин в режим получения сигнала
-  pinMode(shipmentStatusPin, INPUT);     //пин в режим получения сигнала
-  bool shelfStatus = LOW;    //обнуление статуса готовности полки
-  bool shipmentStatus = LOW; //обнуление статуса готовности товара
-  bool workDone = false;     //обнуление статуса занятости
+  workDone = false;
+  Serial.begin(57600);   //необходимая скорость обмена данными
+  radio.begin();    //необходимая для старта радио функция. просто позволяет работать
+  radio.openReadingPipe(1, pipe00);  //открываем первый по счету пайп по такому-то адресу
+  radio.startListening();       //радиомодуль в режим приемника
 }
 
 void loop() {
-  
-  shelfStatus = digitalRead(shelfStatusPin);    //статус готовности - полученный или не полученный сигнал с полки  
-  if (shelfStatus == HIGH) {                                    //если сигнал получен, то
-     shelfStatusPin_Number = digitalRead("туц туц");            //получаю номер полки, от которой пошел сигнал
-     moving.moveTo(pathfinding.findway(shelfSignalPin_Number)); //робот нашел путь до полки № n, двинулся к точке назначения
-   }
-   
-  shipmentStatus = digitalRead(shelfStatusPin); //статус готовности - полученный или не полученный сигнал о товаре
-  if (shipmentStatus == HIGH) {                                 //если сигнал получен, то
-     moving.moveTo(pathfinding.findway(landingZone));           //робот нашел путь до зоны выгрузки, двинулся к точке назначения
-     workDone = true;                                           //работа выполнена, теперь обнулить нужные переменные и двинуть домой
-   }
-
-  if (workDone) {
-     shelfStatusPin_Number = digitalWrite("пиу пиу")     //обнуляю данные о номере готовой полки
-     shelfStatus = LOW;                                  //обнуляю статус готовности полки
-     shipmentStatus = LOW;                               //обнуляю статус готовности товара
-     workDone = false;                                   //обнуляю статус занятости
-     moving.moveTo(pathfinding.findway(startZone));      //робот нашел путь домой, отправился домой
-   }
-      
+  if (radio.available()) {                         //если есть что принимать, робот работает
+     radio.read(&pipeBuffer, sizeof(pipeBuffer));  //данные записываются в буфер pipeBuffer, размер буфера соответствует переменной pipeBuffer
+     for (int i = 2, i < 21, i++) {    //сообщения приходят в виде "1_blah blah blah_2", где 1 - номер полки, а 2 - номер робота, которому идет заказ.
+       neededMessage[0] += pipeBuffer[i]; //считывает с 3 по 22 ячейку буфера, т.е ту часть, где сам текст, а затем составляет сообщение
+     }
+     switch (neededMessage[0]) {        //переключатель считывает необходимое сообщение и делает дела
+        case "ready to deploy": {
+          moving.moveTo(pathfinding.findway(pipeBuffer[0]));  //берет первый символ из сообщения в буфере, который является номером полки
+          break;
+        }
+        case "shipment on board": {
+          moving.moveTo(pathfinding.findway(1337)) //пусть 1337 означает точку выгрузки товара
+          workDone = true;
+          delay(30000); //после приезда на точку выгрузки товара, пусть подождет 30 сек, пока товар заберут
+          break;
+        }
+        break;
+     }
+     if (workDone) {
+       moving.moveTo(pathfinding.findway(404))      //пусть 404 означает базу  
+       workDone = false;
+     }
+  }
 }
-  
-
-
-
-
-
-
-
-
-  
