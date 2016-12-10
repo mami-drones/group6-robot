@@ -1,27 +1,27 @@
-#define LLsensor A4
-#define RLsensor A3
-#define Lsensor1 A1
-#define Lsensor2 12
-#define Lsensor3 11
-#define Lsensor4 8
-#define Lsensor5 3
-#define Lsensor6 2
-#define Lsensor7 1
-#define Lsensor8 0
+#define LLsensor A4 //Левый боковой сенсор 
+#define RLsensor A3 //Правый боковой сенсор
+#define Lsensor1 A1 //Первый датчик на линейке
+#define Lsensor2 12 //Второй датчик на линейке
+#define Lsensor3 11 //Третий датчик на линейке
+#define Lsensor4 8 //Четвертый датчик на линейке
+#define Lsensor5 3 //Пятый датчик на линейке
+#define Lsensor6 2 //Шестой датчик на линейке
+#define Lsensor7 1 //Седьмой датчик на линейке
+#define Lsensor8 0 //Восьмой датчик на линейке
 void setup()
 {}
-float Sum = 0;
-int SpeedL = 40;
-int SpeedR = 40;
-int s1, s2, s3, s4, s5, s6, s7, s8, s9, s10;
-float k1 = 0.1, k2 = 2, k3 = 0;
+float Sum = 0; //Сумма весов присвоенных сенсорам линейки
+int SpeedL = 40; //Скорость левого мотора
+int SpeedR = 40; //Скорость правого мотора
+int s1, s2, s3, s4, s5, s6, s7, s8, s9, s10; //Показание датчиков в виде (0/1)
+float k1 = 0.1, k2 = 2, k3 = 0; //Коэффициенты ПИД регулятора
 float DeltaSum = 0, LastSum = 0, DeltaTime = 0;
-float Error1, Error2, Error3, Reg;
-float StopCycleTime = 0;
-int AllSum = 0;
-int CurrentError = 0;
-unsigned long AllTime;
-int state = 0, staterevers = 0;
+float Error1, Error2, Error3, Reg; //Переменные для рассчета ПИД регулятора
+float StopCycleTime = 0; //Конечное время цикла движения вперед 
+int AllSum = 0; //общая сумма весов присвоенных сенсорам линейки
+int CurrentError = 0; //Текущая ошибка ПИД регулятора
+unsigned long AllTime; //Время выполнения программы
+int state = 0, staterevers = 0; //Состояние движения и поворота
 void loop()
 {
   AllTime = millis();
