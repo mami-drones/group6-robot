@@ -94,7 +94,11 @@ void loop()
       }
       //pathfinding.findPath(-1); ищем путь на базу
       //moving.moveTo(); едем на базу
-      Serial.print("Work done!");     
+      Serial.print("Work done!");
+    
+    //АТЕНШН!
+    //ТУТ НАДО ЗАКРЫТЬ И ОТКРЫТЬ ОБРАТНО ПАЙПЫ!
+    //АТЕНШН!
    }             
  }
  Serial.println("Radio is not available!");
